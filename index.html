@@ -9,13 +9,29 @@
 <body>
   <main class="app">
     <section class="hud">
-      <h1>Mini Minecraft (Expanded Prototype)</h1>
-      <p>Click to mine. Shift + Click to place selected block.</p>
-      <p>Move: A/D or ←/→ &nbsp; Jump: W/Space/↑ &nbsp; Modes: G</p>
+      <h1>Mini Minecraft (Playable Browser Prototype)</h1>
+      <p>Desktop: Click to mine, Shift+Click to place. Keys: A/D + Space, G mode switch.</p>
+      <p>Mobile: Use buttons below + action toggle (Mine/Place).</p>
       <div class="stats" id="stats"></div>
+      <div class="tools">
+        <button id="action-toggle" class="tool-btn">Action: Mine</button>
+        <button id="restart" class="tool-btn">Restart</button>
+      </div>
       <div class="inventory" id="inventory"></div>
     </section>
+
     <canvas id="game" width="960" height="540" aria-label="Mini Minecraft world"></canvas>
+
+    <section class="touch-controls" aria-label="Touch controls">
+      <div class="cluster">
+        <button data-key="a" class="control">◀</button>
+        <button data-key="d" class="control">▶</button>
+      </div>
+      <div class="cluster">
+        <button data-key=" " class="control">⤒ Jump</button>
+        <button data-key="s" class="control">⤓ Down</button>
+      </div>
+    </section>
   </main>
   <script src="script.js"></script>
 </body>

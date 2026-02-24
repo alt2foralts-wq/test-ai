@@ -2,6 +2,8 @@ const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 const inventoryEl = document.getElementById('inventory');
 const statsEl = document.getElementById('stats');
+const actionToggleBtn = document.getElementById('action-toggle');
+const restartBtn = document.getElementById('restart');
 
 const tileSize = 30;
 const worldWidth = 120;
@@ -27,10 +29,27 @@ const blockById = Object.values(BLOCKS).reduce((acc, block) => {
 }, {});
 
 const placeable = [BLOCKS.dirt, BLOCKS.stone, BLOCKS.wood, BLOCKS.leaves, BLOCKS.sand, BLOCKS.water, BLOCKS.lava];
+const keys = new Set();
+const camera = { x: 0, y: 0 };
+
 let selected = 0;
 let tick = 0;
+let actionMode = 'mine';
 
 const world = Array.from({ length: worldHeight }, () => Array(worldWidth).fill(BLOCKS.air.id));
+
+const player = {
+  x: 15 * tileSize,
+  y: 10 * tileSize,
+  w: tileSize * 0.75,
+  h: tileSize * 1.4,
+  vx: 0,
+  vy: 0,
+  onGround: false,
+  health: 20,
+  hunger: 20,
+  mode: 'survival',
+};
 
 function setBlock(x, y, block) {
   if (x < 0 || y < 0 || x >= worldWidth || y >= worldHeight) return;
@@ -42,7 +61,13 @@ function getBlock(x, y) {
   return world[y][x];
 }
 
-function generateWorld() {
+function resetWorld() {
+  for (let y = 0; y < worldHeight; y++) {
+    for (let x = 0; x < worldWidth; x++) {
+      world[y][x] = BLOCKS.air.id;
+    }
+  }
+
   for (let x = 0; x < worldWidth; x++) {
     const heightOffset = Math.floor(Math.sin(x * 0.25) * 2 + Math.sin(x * 0.08) * 4);
     const surface = 20 + heightOffset;
@@ -67,39 +92,21 @@ function generateWorld() {
 
     if (Math.random() < 0.03) setBlock(x, surface - 1, BLOCKS.water);
   }
+
+  player.x = 15 * tileSize;
+  player.y = 10 * tileSize;
+  player.vx = 0;
+  player.vy = 0;
+  player.health = 20;
+  player.hunger = 20;
+  player.mode = 'survival';
+  tick = 0;
 }
-
-generateWorld();
-
-const player = {
-  x: 15 * tileSize,
-  y: 10 * tileSize,
-  w: tileSize * 0.75,
-  h: tileSize * 1.4,
-  vx: 0,
-  vy: 0,
-  onGround: false,
-  health: 20,
-  hunger: 20,
-  mode: 'survival',
-};
-
-const keys = new Set();
-const camera = { x: 0, y: 0 };
-
-window.addEventListener('keydown', (e) => {
-  keys.add(e.key.toLowerCase());
-  if (e.key.toLowerCase() === 'g') {
-    player.mode = player.mode === 'survival' ? 'creative' : player.mode === 'creative' ? 'spectator' : 'survival';
-  }
-});
-window.addEventListener('keyup', (e) => keys.delete(e.key.toLowerCase()));
 
 function isSolidAtPixel(px, py) {
   const tx = Math.floor(px / tileSize);
   const ty = Math.floor(py / tileSize);
-  const id = getBlock(tx, ty);
-  return blockById[id].solid;
+  return blockById[getBlock(tx, ty)].solid;
 }
 
 function isLiquidAtPixel(px, py) {
@@ -152,8 +159,8 @@ function updatePlayer() {
 
   if (player.mode === 'spectator') {
     player.vy = (jump ? -speed : 0) + (down ? speed : 0);
-  } else {
-    if (jump && player.onGround) player.vy = -10.5;
+  } else if (jump && player.onGround) {
+    player.vy = -10.5;
   }
 
   const inLiquid = isLiquidAtPixel(player.x + player.w / 2, player.y + player.h / 2);
@@ -169,6 +176,10 @@ function updatePlayer() {
     if (player.hunger === 0 && tick % 120 === 0) player.health = Math.max(0, player.health - 1);
   } else {
     player.hunger = 20;
+  }
+
+  if (player.health <= 0) {
+    resetWorld();
   }
 
   camera.x = player.x - canvas.width / 2;
@@ -198,19 +209,45 @@ function updateWorldPhysics() {
   }
 }
 
-canvas.addEventListener('click', (event) => {
+function worldPositionFromPointer(event) {
   const rect = canvas.getBoundingClientRect();
   const x = ((event.clientX - rect.left) * canvas.width) / rect.width + camera.x;
   const y = ((event.clientY - rect.top) * canvas.height) / rect.height + camera.y;
-  const tx = Math.floor(x / tileSize);
-  const ty = Math.floor(y / tileSize);
+  return {
+    tx: Math.floor(x / tileSize),
+    ty: Math.floor(y / tileSize),
+  };
+}
 
-  if (event.shiftKey) {
+function interactAt(tx, ty, placeMode) {
+  if (placeMode) {
     if (getBlock(tx, ty) === BLOCKS.air.id) setBlock(tx, ty, placeable[selected]);
-  } else {
-    if (getBlock(tx, ty) !== BLOCKS.air.id) setBlock(tx, ty, BLOCKS.air);
+  } else if (getBlock(tx, ty) !== BLOCKS.air.id) {
+    setBlock(tx, ty, BLOCKS.air);
+  }
+}
+
+canvas.addEventListener('click', (event) => {
+  const { tx, ty } = worldPositionFromPointer(event);
+  const placeMode = event.shiftKey || actionMode === 'place';
+  interactAt(tx, ty, placeMode);
+});
+
+canvas.addEventListener('touchstart', (event) => {
+  event.preventDefault();
+  const touch = event.changedTouches[0];
+  const { tx, ty } = worldPositionFromPointer({ clientX: touch.clientX, clientY: touch.clientY });
+  interactAt(tx, ty, actionMode === 'place');
+}, { passive: false });
+
+window.addEventListener('keydown', (event) => {
+  keys.add(event.key.toLowerCase());
+  if (event.key.toLowerCase() === 'g') {
+    player.mode = player.mode === 'survival' ? 'creative' : player.mode === 'creative' ? 'spectator' : 'survival';
   }
 });
+
+window.addEventListener('keyup', (event) => keys.delete(event.key.toLowerCase()));
 
 function drawWorld() {
   ctx.fillStyle = '#8ec7ff';
@@ -254,7 +291,7 @@ function drawDayNightOverlay() {
 function renderStats() {
   const hearts = '❤'.repeat(Math.ceil(player.health / 2));
   const hunger = '🍗'.repeat(Math.ceil(player.hunger / 2));
-  statsEl.textContent = `Mode: ${player.mode.toUpperCase()} | Health: ${hearts || '☠'} (${player.health}) | Hunger: ${hunger || '…'} (${player.hunger})`;
+  statsEl.textContent = `Mode: ${player.mode.toUpperCase()} | Action: ${actionMode.toUpperCase()} | Health: ${hearts || '☠'} (${player.health}) | Hunger: ${hunger || '…'} (${player.hunger})`;
 }
 
 function loop() {
@@ -284,5 +321,36 @@ function renderInventory() {
   });
 }
 
+function bindTouchControls() {
+  document.querySelectorAll('.control').forEach((button) => {
+    const mappedKey = button.dataset.key;
+    const press = (event) => {
+      event.preventDefault();
+      keys.add(mappedKey);
+    };
+    const release = (event) => {
+      event.preventDefault();
+      keys.delete(mappedKey);
+    };
+
+    button.addEventListener('pointerdown', press);
+    button.addEventListener('pointerup', release);
+    button.addEventListener('pointercancel', release);
+    button.addEventListener('pointerleave', release);
+  });
+}
+
+actionToggleBtn.addEventListener('click', () => {
+  actionMode = actionMode === 'mine' ? 'place' : 'mine';
+  actionToggleBtn.textContent = `Action: ${actionMode[0].toUpperCase()}${actionMode.slice(1)}`;
+  actionToggleBtn.classList.toggle('active', actionMode === 'place');
+});
+
+restartBtn.addEventListener('click', () => {
+  resetWorld();
+});
+
+bindTouchControls();
+resetWorld();
 renderInventory();
 loop();

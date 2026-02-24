@@ -1,8 +1,15 @@
 # Mini Minecraft (Browser Prototype)
 
-This repository contains a lightweight, no-build browser prototype inspired by Minecraft.
+This repository contains a lightweight, no-build browser prototype inspired by Minecraft, focused on being playable directly in a web browser.
 
-## What was added in this update
+## What was improved for browser playability
+
+- Added **touch-friendly controls** for left/right/jump/down.
+- Added an **Action toggle** (`Mine` / `Place`) so mobile users can place blocks without Shift.
+- Added a **Restart** button for quick recovery if the player dies or gets stuck.
+- Kept desktop controls (`A/D`, jump, `G` mode cycling, click/Shift+click) intact.
+
+## Existing gameplay systems
 
 - Survival stats (health/hunger) with simple hunger drain and starvation/fall damage.
 - Day/night visual cycle overlay.
@@ -11,7 +18,7 @@ This repository contains a lightweight, no-build browser prototype inspired by M
   - Gravity-like falling blocks (`Sand`)
   - Very simple fluid spread (`Water`, `Lava`)
 
-> Important: This is still a compact prototype, **not** a full Minecraft parity implementation. Building complete parity (all biomes, dimensions, mobs, redstone behavior, multiplayer, mod API, etc.) requires a large multi-module engine project.
+> Important: This is still a compact prototype, **not** a full Minecraft parity implementation.
 
 ## Run
 
@@ -23,14 +30,16 @@ Then open <http://localhost:8000>.
 
 ## Controls
 
+### Desktop
 - Move: `A/D` or `←/→`
 - Jump/Fly up: `W` / `Space` / `↑`
 - Fly down (spectator): `S` / `↓`
 - Mine block: Click
 - Place selected block: `Shift + Click`
-- Change selected block: use inventory buttons
+- Change selected block: inventory buttons
 - Cycle game mode: `G`
 
-## Suggested next step for your full request
-
-If you want, I can now add a **complete engineering plan** in this repo for full-feature parity (world/chunks, redstone sim, entities/AI, dimensions, networking, save formats, plugin/mod interfaces), broken into milestones and staffing estimates.
+### Mobile / Touch
+- Use on-screen arrow/jump/down buttons
+- Tap canvas to perform selected action (`Mine` or `Place`)
+- Switch action with the **Action** button
