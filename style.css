@@ -34,9 +34,16 @@ body {
   color: #bdd1ff;
 }
 
+.stats {
+  margin-top: 0.45rem;
+  color: #ffe9b3;
+  font-size: 0.95rem;
+}
+
 .inventory {
   margin-top: 0.5rem;
   display: flex;
+  flex-wrap: wrap;
   gap: 0.45rem;
 }
 
