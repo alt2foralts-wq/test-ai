@@ -1,0 +1,64 @@
+:root {
+  color-scheme: dark;
+  font-family: Inter, system-ui, sans-serif;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: #1d2330;
+  color: #ecf2ff;
+}
+
+.app {
+  display: grid;
+  gap: 0.75rem;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.hud {
+  background: #10151fcc;
+  border: 1px solid #314162;
+  border-radius: 12px;
+  padding: 0.8rem 1rem;
+}
+
+.hud h1 {
+  margin: 0 0 0.35rem;
+  font-size: 1.2rem;
+}
+
+.hud p {
+  margin: 0.2rem 0;
+  color: #bdd1ff;
+}
+
+.inventory {
+  margin-top: 0.5rem;
+  display: flex;
+  gap: 0.45rem;
+}
+
+.slot {
+  border: 2px solid #4a628f;
+  border-radius: 8px;
+  background: #19243c;
+  color: inherit;
+  padding: 0.35rem 0.6rem;
+  cursor: pointer;
+}
+
+.slot.active {
+  border-color: #f3cf7f;
+  box-shadow: 0 0 0 1px #f3cf7f inset;
+}
+
+#game {
+  border: 2px solid #4a628f;
+  border-radius: 14px;
+  width: min(95vw, 960px);
+  height: auto;
+  background: #8ec7ff;
+  image-rendering: pixelated;
+}
